@@ -1,7 +1,7 @@
 from constants import BOARD_SIZE, EMPTY, BLACK, WHITE, DIRECTIONS
 import numpy as np
 import random
-
+import copy 
 class Othello:
     def __init__(self):
         self.board = np.zeros((BOARD_SIZE, BOARD_SIZE))
@@ -149,42 +149,43 @@ class Othello:
     def minimax(self, depth, alpha, beta, maximizing):
         """ Minimax Algorithm with Alpha-Beta Pruning """
         valid_moves = self.get_valid_moves()
-        # Base Case: Stop when depth reaches 0 or no moves left
+
+        #  Base Case (Stop when depth reaches 0 or no moves left)
         if depth == 0 or not valid_moves:
             return self.evaluate_board(), None
 
-        if maximizing:  # AI's Turn
+        if maximizing:  #AI's Turn (Maximizing Player)
             best_score = float('-inf')
             best_move = None
             for move in valid_moves:
-                board_copy = self.board.copy()
-                self.set_dish_temp(board_copy, move, self.ai_player)  # Simulate AI move
-                score, _ = self.minimax(depth - 1, alpha, beta, False)
+                game_copy = copy.deepcopy(self)  #Copy the entire game state
+                game_copy.set_dish(move[0], move[1])  # Simulate AI move
+                score, _ = game_copy.minimax(depth - 1, alpha, beta, False)  # Opponent's turn
 
                 if score > best_score:
                     best_score = score
                     best_move = move
                 alpha = max(alpha, best_score)
                 if beta <= alpha:
-                    break  # Prune
+                    break  #Alpha-Beta Pruning (Prune bad branches)
 
             return best_score, best_move
 
-        else:  # Opponent's Turn
+        else:  #  Opponent's Turn (Minimizing Player)
             best_score = float('inf')
             best_move = None
-            opponent = -self.ai_player
+            opponent = -self.current_player  # Correct opponent selection
             for move in valid_moves:
-                board_copy = self.board.copy()
-                self.set_dish_temp(board_copy, move, opponent)  # Simulate opponent move
-                score, _ = self.minimax(depth - 1, alpha, beta, True)
+                game_copy = copy.deepcopy(self)  # Copy game state
+                game_copy.set_dish(move[0], move[1])  # Simulate opponent's move
+                score, _ = game_copy.minimax(depth - 1, alpha, beta, True)  # AI's turn next
 
                 if score < best_score:
                     best_score = score
                     best_move = move
                 beta = min(beta, best_score)
                 if beta <= alpha:
-                    break  # Prune
+                    break  #Alpha-Beta Pruning
 
             return best_score, best_move
 
@@ -193,24 +194,6 @@ class Othello:
         """Evaluate the board for the AI player"""
         return np.sum(self.board == self.ai_player) - np.sum(self.board == -self.ai_player)
     
-    def set_dish_temp(self, board, move, player):
-        """Simulate a move on a temporary board"""
-        row, col = move
-        board[row][col] = player
-        for dr, dc in DIRECTIONS:
-            r, c = row + dr, col + dc
-            flip_positions = []
-            while 0 <= r < BOARD_SIZE and 0 <= c < BOARD_SIZE:
-                if board[r][c] == (-player):
-                    flip_positions.append((r, c))
-                    r += dr
-                    c += dc
-                elif board[r][c] == player:
-                    for flip_r, flip_c in flip_positions:
-                        board[flip_r][flip_c] = player
-                    break
-                else:
-                    break
 
     def human_input(self):
         """ Get the human player's input"""
