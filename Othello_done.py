@@ -14,7 +14,7 @@ class Othello:
         self.game_end = False
         self.ai_player = None  # AI player (BLACK or WHITE)
         # change the parameter to True when testing the algorithm. 
-        self.auto_player = True
+        self.auto_player = False
 
 
     def print_board(self,valid_moves = []):
@@ -143,7 +143,7 @@ class Othello:
     def get_best_move(self):
         """ Return a random move for the AI player"""
 
-        _, best_move = self.minimax(3, float('-inf'), float('inf'), True)
+        _, best_move = self.minimax(5, float('-inf'), float('inf'), True)
         return best_move
     
     def minimax(self, depth, alpha, beta, maximizing):
@@ -160,6 +160,7 @@ class Othello:
             for move in valid_moves:
                 game_copy = copy.deepcopy(self)  #Copy the entire game state
                 game_copy.set_dish(move[0], move[1])  # Simulate AI move
+                game_copy.current_player = - self.current_player  # Switch player
                 score, _ = game_copy.minimax(depth - 1, alpha, beta, False)  # Opponent's turn
 
                 if score > best_score:
@@ -167,18 +168,18 @@ class Othello:
                     best_move = move
                 alpha = max(alpha, best_score)
                 if beta <= alpha:
-                    break  #Alpha-Beta Pruning (Prune bad branches)
+                    break  #Alpha-Beta Pruning 
 
             return best_score, best_move
 
         else:  #  Opponent's Turn (Minimizing Player)
             best_score = float('inf')
             best_move = None
-            opponent = -self.current_player  # Correct opponent selection
             for move in valid_moves:
                 game_copy = copy.deepcopy(self)  # Copy game state
                 game_copy.set_dish(move[0], move[1])  # Simulate opponent's move
-                score, _ = game_copy.minimax(depth - 1, alpha, beta, True)  # AI's turn next
+                game_copy.current_player = -self.current_player  # Switch player
+                score, _ = game_copy.minimax(depth - 1, alpha, beta, True)  
 
                 if score < best_score:
                     best_score = score
